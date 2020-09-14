@@ -2,9 +2,7 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
-	"log"
 
 	"github.com/awa/go-iap/appstore"
 	"github.com/awa/go-iap/playstore"
@@ -33,7 +31,8 @@ func (a *Apple) Verify(request map[string]interface{}) map[string]interface{} {
 	ctx := context.Background()
 	err := a.Client.Verify(ctx, req, resp)
 	if err != nil {
-		log.Fatal(err)
+		return map[string]interface{}{
+			"error": err.Error()}
 	}
 	m := structs.Map(resp)
 	return m
@@ -50,17 +49,20 @@ func (g *Google) Verify(request map[string]interface{}) map[string]interface{} {
 	// at https://console.developers.google.com.
 	jsonKey, err := ioutil.ReadFile("jsonKey.json")
 	if err != nil {
-		fmt.Println(err)
+		return map[string]interface{}{
+			"error": err.Error()}
 	}
 	client, err := playstore.New(jsonKey)
 	if err != nil {
-		fmt.Println(err)
+		return map[string]interface{}{
+			"error": err.Error()}
 	}
 	g.Client = client
 	ctx := context.Background()
 	resp, err := g.Client.VerifySubscription(ctx, request["Package"].(string), request["SubscriptionID"].(string), request["PurchaseToken"].(string))
 	if err != nil {
-		fmt.Println(err.Error())
+		return map[string]interface{}{
+			"error": err.Error()}
 	}
 	m := structs.Map(resp)
 	return m

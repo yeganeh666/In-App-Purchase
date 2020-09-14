@@ -17,15 +17,21 @@ func AppleVerify(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
 		helper.HttpResponse(w, http.StatusBadRequest, []byte(err.Error()))
+		return
 	}
 	if ok, response := validators.Validate(data); !ok {
 		helper.HttpResponse(w, response.StatusCode, response.Body)
-	} else {
-		jsonMap := structs.Map(data)
-		X = &Apple{}
-		fmt.Println(X.Verify(jsonMap))
-		helper.HttpResponse(w, http.StatusOK, []byte("OK!"))
+		return
 	}
+	jsonMap := structs.Map(data)
+	X = &Apple{}
+	res := X.Verify(jsonMap)
+	if res["error"] != nil {
+		helper.HttpResponse(w, http.StatusBadRequest, []byte(res["error"].(string)))
+		return
+	}
+	helper.HttpResponse(w, http.StatusOK, []byte("OK!"))
+	return
 }
 
 //GoogleVerify handler
@@ -34,14 +40,21 @@ func GoogleVerify(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
 		helper.HttpResponse(w, http.StatusBadRequest, []byte(err.Error()))
+		return
 	}
 	if ok, response := validators.Validate(data); !ok {
 		helper.HttpResponse(w, response.StatusCode, response.Body)
-	} else {
-		jsonMap := structs.Map(data)
-		fmt.Println(jsonMap)
-		X = &Google{}
-		fmt.Println(X.Verify(jsonMap))
-		helper.HttpResponse(w, http.StatusOK, []byte("OK!"))
+		return
 	}
+	jsonMap := structs.Map(data)
+	fmt.Println(jsonMap)
+	X = &Google{}
+	res := X.Verify(jsonMap)
+	if res["error"] != nil {
+		helper.HttpResponse(w, http.StatusBadRequest, []byte(res["error"].(string)))
+		return
+	}
+	helper.HttpResponse(w, http.StatusOK, []byte("OK!"))
+	return
+
 }
