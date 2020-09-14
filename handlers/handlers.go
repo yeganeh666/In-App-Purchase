@@ -3,63 +3,45 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"iap/helper"
+	"iap/models"
+	"iap/validators"
 	"net/http"
-)
 
-//AppleService create new apple service
-func AppleService(w http.ResponseWriter, r *http.Request) {
-	X = &Apple{}
-	X.NewService()
-	fmt.Fprintf(w, "Done!")
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-}
+	"github.com/fatih/structs"
+)
 
 //AppleVerify handler
 func AppleVerify(w http.ResponseWriter, r *http.Request) {
-	jsonMap := make(map[string]interface{})
-	err := json.NewDecoder(r.Body).Decode(&jsonMap)
+	data := models.ReceiptData{}
+	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
-		log.Fatal(err)
+		helper.HttpResponse(w, http.StatusBadRequest, []byte(err.Error()))
 	}
-	fmt.Println(jsonMap)
-	//var x Services = &Apple{}
-	//x.NewService()
-	fmt.Println(X.Verify(jsonMap))
-	fmt.Fprintf(w, "req map: %+v", jsonMap)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
-}
-
-//GoogleService create new google service
-func GoogleService(w http.ResponseWriter, r *http.Request) {
-	X = &Google{}
-	X.NewService()
-	fmt.Fprintf(w, "Done!")
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	if ok, response := validators.Validate(data); !ok {
+		helper.HttpResponse(w, response.StatusCode, response.Body)
+	} else {
+		jsonMap := structs.Map(data)
+		X = &Apple{}
+		fmt.Println(X.Verify(jsonMap))
+		helper.HttpResponse(w, http.StatusOK, []byte("OK!"))
+	}
 }
 
 //GoogleVerify handler
 func GoogleVerify(w http.ResponseWriter, r *http.Request) {
-	jsonMap := make(map[string]interface{})
-	err := json.NewDecoder(r.Body).Decode(&jsonMap)
+	data := models.VerifySubscription{}
+	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
-		log.Fatal(err)
+		helper.HttpResponse(w, http.StatusBadRequest, []byte(err.Error()))
 	}
-	// jsonMap {
-	// 	"package":        "package",
-	// 	"subscriptionID": "subscriptionID",
-	// 	"purchaseToken":  "purchaseToken",
-	// }
-	fmt.Println(jsonMap)
-	// var x2 Services = &Google{}
-	// x2.NewService()
-	fmt.Println(X.Verify(jsonMap))
-	fmt.Fprintf(w, "req map: %+v", jsonMap)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
+	if ok, response := validators.Validate(data); !ok {
+		helper.HttpResponse(w, response.StatusCode, response.Body)
+	} else {
+		jsonMap := structs.Map(data)
+		fmt.Println(jsonMap)
+		X = &Google{}
+		fmt.Println(X.Verify(jsonMap))
+		helper.HttpResponse(w, http.StatusOK, []byte("OK!"))
+	}
 }

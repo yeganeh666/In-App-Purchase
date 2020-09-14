@@ -13,7 +13,6 @@ import (
 
 //Services for handle IAPs
 type Services interface {
-	NewService()
 	Verify(map[string]interface{}) map[string]interface{}
 }
 
@@ -24,15 +23,9 @@ type Apple struct {
 	Client *appstore.Client
 }
 
-//NewService create new Apple client
-func (a *Apple) NewService() {
-	a.Client = appstore.New()
-	fmt.Println("OK")
-	return
-}
-
 //Verify ReceiptData in Apple
 func (a *Apple) Verify(request map[string]interface{}) map[string]interface{} {
+	a.Client = appstore.New()
 	req := appstore.IAPRequest{
 		ReceiptData: request["ReceiptData"].(string),
 	}
@@ -42,7 +35,6 @@ func (a *Apple) Verify(request map[string]interface{}) map[string]interface{} {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("OK")
 	m := structs.Map(resp)
 	return m
 }
@@ -52,31 +44,24 @@ type Google struct {
 	Client *playstore.Client
 }
 
-//NewService create new Google client
-func (g *Google) NewService() {
+//Verify Subscription in Google
+func (g *Google) Verify(request map[string]interface{}) map[string]interface{} {
 	// You need to prepare a public key for your Android app's in app billing
 	// at https://console.developers.google.com.
 	jsonKey, err := ioutil.ReadFile("jsonKey.json")
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	client, err := playstore.New(jsonKey)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	g.Client = client
-	fmt.Println("OK")
-	return
-}
-
-//Verify Subscription in Google
-func (g *Google) Verify(request map[string]interface{}) map[string]interface{} {
 	ctx := context.Background()
-	resp, err := g.Client.VerifySubscription(ctx, request["package"].(string), request["subscriptionID"].(string), request["purchaseToken"].(string))
+	resp, err := g.Client.VerifySubscription(ctx, request["Package"].(string), request["SubscriptionID"].(string), request["PurchaseToken"].(string))
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err.Error())
 	}
 	m := structs.Map(resp)
-	fmt.Println("OK")
 	return m
 }
