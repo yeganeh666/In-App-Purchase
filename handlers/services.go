@@ -47,7 +47,7 @@ type Google struct {
 func (g *Google) Verify(request map[string]interface{}) map[string]interface{} {
 	// You need to prepare a public key for your Android app's in app billing
 	// at https://console.developers.google.com.
-	jsonKey, err := ioutil.ReadFile("jsonKey.json")
+	jsonKey, err := ioutil.ReadFile("json_Key.json")
 	if err != nil {
 		return map[string]interface{}{
 			"error": err.Error()}
