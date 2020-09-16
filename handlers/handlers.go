@@ -2,30 +2,35 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"iap/helper"
-	"iap/models"
+	"iap/services"
 	"iap/validators"
 	"net/http"
 
-	"github.com/fatih/structs"
+	"github.com/gorilla/mux"
 )
 
-//AppleVerify handler
-func AppleVerify(w http.ResponseWriter, r *http.Request) {
-	data := models.ReceiptData{}
-	err := json.NewDecoder(r.Body).Decode(&data)
+func Verify(w http.ResponseWriter, r *http.Request) {
+	var platforms = map[string]Services{
+		"apple":  &services.Apple{},
+		"google": &services.Google{},
+	}
+	platform, ok := platforms[mux.Vars(r)["provider"]]
+
+	if !ok {
+		helper.HttpResponse(w, http.StatusBadRequest, []byte("ERROR!"))
+		return
+	}
+	err := json.NewDecoder(r.Body).Decode(&platform)
 	if err != nil {
 		helper.HttpResponse(w, http.StatusBadRequest, []byte(err.Error()))
 		return
 	}
-	if ok, response := validators.Validate(data); !ok {
+	if ok, response := validators.Validate(platform); !ok {
 		helper.HttpResponse(w, response.StatusCode, response.Body)
 		return
 	}
-	jsonMap := structs.Map(data)
-	X = &Apple{}
-	res := X.Verify(jsonMap)
+	res := platform.Verify()
 	if res["error"] != nil {
 		helper.HttpResponse(w, http.StatusBadRequest, []byte(res["error"].(string)))
 		return
@@ -33,28 +38,21 @@ func AppleVerify(w http.ResponseWriter, r *http.Request) {
 	helper.HttpResponse(w, http.StatusOK, []byte("OK!"))
 	return
 }
-
-//GoogleVerify handler
-func GoogleVerify(w http.ResponseWriter, r *http.Request) {
-	data := models.VerifySubscription{}
-	err := json.NewDecoder(r.Body).Decode(&data)
+func AcknowledgeSubscription(w http.ResponseWriter, r *http.Request) {
+	platform := services.Google{}
+	err := json.NewDecoder(r.Body).Decode(&platform)
 	if err != nil {
 		helper.HttpResponse(w, http.StatusBadRequest, []byte(err.Error()))
 		return
 	}
-	if ok, response := validators.Validate(data); !ok {
+	if ok, response := validators.Validate(platform); !ok {
 		helper.HttpResponse(w, response.StatusCode, response.Body)
 		return
 	}
-	jsonMap := structs.Map(data)
-	fmt.Println(jsonMap)
-	X = &Google{}
-	res := X.Verify(jsonMap)
-	if res["error"] != nil {
-		helper.HttpResponse(w, http.StatusBadRequest, []byte(res["error"].(string)))
+	if err = platform.AcknowledgeSubscription(); err != nil {
+		helper.HttpResponse(w, http.StatusBadRequest, []byte(err.Error()))
 		return
 	}
 	helper.HttpResponse(w, http.StatusOK, []byte("OK!"))
 	return
-
 }
