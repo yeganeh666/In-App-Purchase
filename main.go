@@ -1,26 +1,37 @@
 package main
 
 import (
-	"iap/handlers"
-	"iap/services/google"
+	"context"
+	"iap/routes"
 	"iap/validators"
-	"net/http"
 	"os"
+	"os/signal"
 
 	"github.com/gorilla/mux"
+	"github.com/hashicorp/go-hclog"
 )
 
-func main() {
-	validators.Init()
-	app := &google.App{
-		DefaultHTTPClient:       http.DefaultClient,
-		PubsubVerificationToken: os.Getenv("PUBSUB_VERIFICATION_TOKEN"),
-	}
-	route := mux.NewRouter()
-	route.HandleFunc("/iap/{provider}/verify", handlers.Verify).Methods("POST")
-	route.HandleFunc("/iap/google/acknowledgeSubscription", handlers.AcknowledgeSubscription).Methods("POST")
-	route.HandleFunc("/pubsub/message/list", app.ListHandler)
-	route.HandleFunc("/pubsub/message/receive", app.ReceiveMessagesHandler)
-	http.ListenAndServe(":3000", route)
+var router *mux.Router
 
+func init() {
+	validators.Init()
+	router = routes.InitRoutes()
+}
+
+func main() {
+	l := hclog.Default()
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go func() {
+		oscall := <-c
+		l.Info("system call:", oscall)
+		cancel()
+	}()
+
+	if err := routes.Serve(ctx, router, l); err != nil {
+		l.Error("failed to serve:", "error", err)
+	}
 }
