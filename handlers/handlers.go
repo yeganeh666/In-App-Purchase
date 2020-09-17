@@ -3,7 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"iap/helper"
-	"iap/services"
+	"iap/services/apple"
+	"iap/services/google"
 	"iap/validators"
 	"net/http"
 
@@ -12,8 +13,8 @@ import (
 
 func Verify(w http.ResponseWriter, r *http.Request) {
 	var platforms = map[string]Services{
-		"apple":  &services.Apple{},
-		"google": &services.Google{},
+		"apple":  &apple.Apple{},
+		"google": &google.Google{},
 	}
 	platform, ok := platforms[mux.Vars(r)["provider"]]
 
@@ -39,7 +40,7 @@ func Verify(w http.ResponseWriter, r *http.Request) {
 	return
 }
 func AcknowledgeSubscription(w http.ResponseWriter, r *http.Request) {
-	platform := services.Google{}
+	platform := google.Google{}
 	err := json.NewDecoder(r.Body).Decode(&platform)
 	if err != nil {
 		helper.HttpResponse(w, http.StatusBadRequest, []byte(err.Error()))
