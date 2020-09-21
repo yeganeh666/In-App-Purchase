@@ -19,6 +19,7 @@ func InitRoutes() *mux.Router {
 	route.HandleFunc("/iap/google/acknowledgeSubscription", handlers.AcknowledgeSubscription).Methods("POST")
 	route.HandleFunc("/pubsub/message/list", app.ListHandler)
 	route.HandleFunc("/pubsub/message/receive", app.ReceiveMessagesHandler)
+	route.HandleFunc("/iap/paypal", handlers.PayPalPayment).Methods("POST")
 
 	return route
 }

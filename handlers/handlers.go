@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
+	"iap/db/mongo"
 	"iap/helper"
 	"iap/services/apple"
 	"iap/services/google"
+	paypalService "iap/services/paypal"
 	"iap/validators"
 	"net/http"
 
@@ -56,4 +58,29 @@ func AcknowledgeSubscription(w http.ResponseWriter, r *http.Request) {
 	}
 	helper.HttpResponse(w, http.StatusOK, []byte("OK!"))
 	return
+}
+func PayPalPayment(w http.ResponseWriter, r *http.Request) {
+	type info struct {
+		Items    []string `json:"items"`
+		Receiver string   `json:"receiver"`
+	}
+	body := &info{}
+	err := json.NewDecoder(r.Body).Decode(body)
+	if err != nil {
+		helper.HttpResponse(w, http.StatusBadRequest, []byte(err.Error()))
+		return
+	}
+	amount := mongo.MG.GetAmount(body.Items)
+	p := &paypalService.PayPal{}
+	paypalres, err := p.Pay(amount)
+	if err != nil {
+		helper.HttpResponse(w, http.StatusBadRequest, []byte(err.Error()))
+		return
+	}
+	err = mongo.MG.InsertTransactions(paypalres.TransactionID)
+	if err != nil {
+		helper.HttpResponse(w, http.StatusBadRequest, []byte(err.Error()))
+		return
+	}
+	//paypalres.Href??w????
 }

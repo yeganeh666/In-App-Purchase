@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"iap/db"
+	"iap/db/mongo"
 	"iap/routes"
 	"iap/validators"
 	"os"
@@ -11,11 +13,17 @@ import (
 	"github.com/hashicorp/go-hclog"
 )
 
-var router *mux.Router
+var (
+	router *mux.Router
+)
 
 func init() {
 	validators.Init()
 	router = routes.InitRoutes()
+	var DB = map[string]db.DataBase{
+		"mongo": &mongo.MongoInstance{},
+	}
+	DB["mongo"].ConnectToDB()
 }
 
 func main() {
