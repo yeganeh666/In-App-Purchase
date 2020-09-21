@@ -39,6 +39,7 @@ func Verify(w http.ResponseWriter, r *http.Request) {
 	helper.HttpResponse(w, http.StatusOK, []byte("OK!"))
 	return
 }
+
 func AcknowledgeSubscription(w http.ResponseWriter, r *http.Request) {
 	platform := google.Google{}
 	err := json.NewDecoder(r.Body).Decode(&platform)
